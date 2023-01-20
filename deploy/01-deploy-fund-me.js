@@ -1,5 +1,6 @@
 const { network } = require("hardhat")
 const { networkConfig, developmentChains } = require("../helper-hardhat-config")
+const { verify } = require("../utils/verify")
 
 module.exports = async function({ getNamedAccounts, deployments }) {
     const { deploy, log } = deployments
@@ -14,11 +15,20 @@ module.exports = async function({ getNamedAccounts, deployments }) {
     } else {
         ethUsdPricefeedAddress = networkConfig[chainId]["ethUsdPriceFeed"]
     }
+    const args = [ethUsdPricefeedAddress]
     const FundMe = await deploy("FundMe", {
         from: deployer,
-        args: [ethUsdPricefeedAddress],
-        log: true
+        args,
+        log: true,
+        waitConfirmations: network.config.blockConfirmations || 1
     })
+
+    if (
+        !developmentChains.includes(network.name) &&
+        process.env.ETHERSCAN_API_KEY
+    ) {
+        await verify(FundMe.address, args)
+    }
     log("_________________________________________________________")
 
     //pricefeeds are not available in hardhat network,
