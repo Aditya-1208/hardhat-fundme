@@ -16,7 +16,7 @@ describe("FundMe", function() {
 
     describe("constructor", async function() {
         it("sets the aggregator addresses correctly", async function() {
-            const response = await fundMe.priceFeed()
+            const response = await fundMe.s_priceFeed()
             assert.equal(response, mockV3Aggregator.address)
         })
     })
@@ -30,13 +30,13 @@ describe("FundMe", function() {
 
         it("updates the amountFunded data structure", async function() {
             await fundMe.fund({ value: sendValue })
-            const response = await fundMe.addressToAmountFunded(deployer)
+            const response = await fundMe.s_addressToAmountFunded(deployer)
             assert.equal(response.toString(), sendValue.toString())
         })
 
         it("adds funders to array of funders", async function() {
             await fundMe.fund({ value: sendValue })
-            const funder = await fundMe.funders(0)
+            const funder = await fundMe.s_funders(0)
             assert.equal(funder, deployer)
         })
     })
@@ -57,6 +57,37 @@ describe("FundMe", function() {
 
             //act
             const transactionResponse = await fundMe.withdraw()
+            const transactionReceipt = await transactionResponse.wait(1)
+
+            const { gasUsed, effectiveGasPrice } = transactionReceipt
+
+            const endingFundMeBalance = await fundMe.provider.getBalance(
+                fundMe.address
+            )
+            const endingDeployerBalance = await fundMe.provider.getBalance(
+                deployer
+            )
+            //assert
+            assert.equal(endingFundMeBalance, 0)
+            assert.equal(
+                endingDeployerBalance
+                    .add(gasUsed.mul(effectiveGasPrice))
+                    .toString(),
+                startingDeployerBalance.add(startingFundMeBalance).toString()
+            )
+        })
+
+        it("Cheaper withdraw", async function() {
+            // arrange
+            const startingFundMeBalance = await fundMe.provider.getBalance(
+                fundMe.address
+            )
+            const startingDeployerBalance = await fundMe.provider.getBalance(
+                deployer
+            )
+
+            //act
+            const transactionResponse = await fundMe.cheapWithdraw()
             const transactionReceipt = await transactionResponse.wait(1)
 
             const { gasUsed, effectiveGasPrice } = transactionReceipt
