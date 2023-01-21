@@ -1,5 +1,6 @@
 require("@nomicfoundation/hardhat-toolbox")
 require("hardhat-deploy")
+require("hardhat-gas-reporter")
 require("dotenv").config()
 
 const GOERLI_RPC_URL = process.env.GOERLI_RPC_URL
@@ -27,5 +28,12 @@ module.exports = {
         apiKey: {
             goerli: ETHERSCAN_API_KEY
         }
+    },
+    gasReporter: {
+        enabled: true,
+        outputFile: "gas-report.txt",
+        noColors: true,
+        currency: "USD",
+        token: "MATIC"
     }
 }
